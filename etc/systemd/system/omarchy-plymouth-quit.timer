@@ -1,0 +1,7 @@
+[Unit]
+Description=Quit the boot splash if the desktop never takes it over
+
+[Timer]
+OnActiveSec=60s
+AccuracySec=1s
+Unit=omarchy-plymouth-quit.service

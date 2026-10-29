@@ -29,7 +29,7 @@ ShellRoot {
     property bool suspended: false
     property bool ready: false
   }
-  BackgroundIntro { id: intro; host: test }
+  BackgroundIntro { id: intro; host: test; splashDir: Quickshell.env("SPLASH_DIR") }
   FileView { id: cursorLog; path: Quickshell.env("STARTUP_CURSOR_LOG"); printErrors: false }
 
   Timer {
@@ -40,6 +40,7 @@ ShellRoot {
       test.check(intro.cover && !intro.themeBackground, "fresh startup does not prepare an outgoing still image")
       test.check(intro.startupSettled, "the launcher has finished without an intro")
       test.check(intro.startupPending && intro.startupOpacity === 1, "a fresh login hides the desktop until its media and bar are ready")
+      test.check(Qt.colorEqual(intro.splashBackground, "#191a25"), "the login cover takes the boot splash's background, truncated as Plymouth paints it")
       cursorLog.reload()
       cursorLog.waitForJob()
       test.check(!cursorLog.text().trim(), "startup does not restore the cursor while media is loading")

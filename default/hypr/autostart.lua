@@ -1,6 +1,12 @@
 require("default.hypr.startup-cursor")
 
 hl.on("hyprland.start", function()
+  -- sddm only deactivated Plymouth, which kept its frame on screen until
+  -- Hyprland committed a buffer of its own to every output it enabled at
+  -- startup. This event comes as Hyprland starts rendering, after those
+  -- commits, so Plymouth can quit. See etc/systemd/system/sddm.service.d/.
+  hl.exec_cmd("sudo -n /usr/bin/systemctl start --no-block omarchy-plymouth-quit.service")
+
   -- Applications inherit the user's cursor; only the compositor starts blank.
   if omarchy_startup_cursor_pending then
     hl.env("XCURSOR_PATH", omarchy_startup_cursor.path)

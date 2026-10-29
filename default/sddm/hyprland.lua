@@ -67,6 +67,37 @@ if non_latin_layouts:find(" " .. kb_layout:match("^[^,]*") .. " ", 1, true) then
   kb_options = "grp:alts_toggle"
 end
 
+-- The boot splash's background, so the greeter starts on the colour the splash
+-- leaves on screen instead of cutting to black. Duplicated from
+-- default/hypr/looknfeel.lua for the same reason as read_vconsole(); keep the
+-- two in sync.
+local function splash_background()
+  local file = io.open("/usr/share/plymouth/themes/omarchy/omarchy.script", "r")
+  if not file then
+    return "rgb(000000)"
+  end
+
+  local script = file:read("a")
+  file:close()
+  local r, g, b = script:match("Window%.SetBackgroundTopColor%(%s*([%d.]+)%s*,%s*([%d.]+)%s*,%s*([%d.]+)%s*%)")
+  r, g, b = tonumber(r), tonumber(g), tonumber(b)
+  if not (r and g and b) then
+    return "rgb(000000)"
+  end
+
+  -- Truncated as Plymouth converts it, so the two match to the last bit.
+  local function byte(value)
+    return math.floor(math.min(math.max(value, 0), 1) * 255)
+  end
+  return string.format("rgb(%02x%02x%02x)", byte(r), byte(g), byte(b))
+end
+
+-- sddm only deactivated Plymouth; see default/hypr/autostart.lua. A boot that
+-- shows this greeter quits it here, as a session's Hyprland does.
+hl.on("hyprland.start", function()
+  hl.exec_cmd("sudo -n /usr/bin/systemctl start --no-block omarchy-plymouth-quit.service")
+end)
+
 hl.config({
   input = {
     kb_layout = kb_layout,
@@ -77,7 +108,7 @@ hl.config({
   misc = {
     disable_hyprland_logo = true,
     disable_splash_rendering = true,
-    background_color = "rgb(000000)",
+    background_color = splash_background(),
     force_default_wallpaper = 0,
   },
 

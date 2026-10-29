@@ -1,0 +1,9 @@
+[Unit]
+Description=Hand the screen from the boot splash to the desktop
+ConditionPathExists=/run/plymouth/pid
+
+[Service]
+Type=oneshot
+# The desktop is on screen by now, so keep the splash's frame rather than
+# repaint the console under it.
+ExecStart=/usr/bin/plymouth quit --retain-splash

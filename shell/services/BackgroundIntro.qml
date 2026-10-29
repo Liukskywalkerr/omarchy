@@ -42,6 +42,20 @@ Item {
   readonly property bool revealing: revealDelayFrames > 0 || themeFade.running || themeCutReveal.running || startupFade.running
   // The outgoing frame reached, or failed to reach, the screen.
   signal coverPresented()
+  // The boot splash's background, as omarchy-plymouth-set installed it. The
+  // login cover is that colour, as Hyprland's own background is, so the screen
+  // holds the splash's colour from Plymouth until the desktop fades in. The
+  // splash's logo stays with Plymouth: Hyprland draws frames of its own before
+  // this cover maps, and a logo here would blink out and back.
+  property string splashDir: "/usr/share/plymouth/themes/omarchy"
+  readonly property color splashBackground: {
+    var match = String(splashScript.text() || "").match(/Window\.SetBackgroundTopColor\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)/)
+    var channels = match ? match.slice(1).map(Number) : []
+    if (channels.length !== 3 || !channels.every(isFinite)) return "black"
+    // Truncated to 8 bits as Plymouth converts it, so the two match exactly.
+    var byte = function(value) { return Math.floor(Math.min(Math.max(value, 0), 1) * 255) / 255 }
+    return Qt.rgba(byte(channels[0]), byte(channels[1]), byte(channels[2]), 1)
+  }
   readonly property var backgroundService: host && host.services ? host.firstPartyServiceFor("omarchy.background") : null
   readonly property bool backgroundActive: !!backgroundService && !backgroundService.suspended
   readonly property bool backgroundReady: backgroundActive && backgroundService.ready !== false
@@ -258,6 +272,14 @@ Item {
     }
   }
 
+  FileView {
+    id: splashScript
+    path: root.startupPending ? root.splashDir + "/omarchy.script" : ""
+    blockLoading: true
+    watchChanges: false
+    printErrors: false
+  }
+
   // A shell restart shares this compositor session; a new login does not.
   FileView {
     id: sessionMarker
@@ -317,7 +339,7 @@ Item {
 
       Rectangle {
         anchors.fill: parent
-        color: "black"
+        color: root.splashBackground
         opacity: root.startupOpacity
       }
 

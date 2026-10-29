@@ -1,0 +1,2 @@
+%wheel ALL=(root) NOPASSWD: /usr/bin/systemctl start --no-block omarchy-plymouth-quit.service
+sddm ALL=(root) NOPASSWD: /usr/bin/systemctl start --no-block omarchy-plymouth-quit.service
