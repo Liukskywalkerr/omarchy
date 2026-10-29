@@ -968,7 +968,10 @@ finalize_user() {
   home=$(getent passwd "$username" | cut -d: -f6)
   shell=$(getent passwd "$username" | cut -d: -f7)
 
+  # Adopted over SSH, this runs inside root's login session; its runtime dir
+  # and session bus are root's, and the owner can use neither.
   runuser -u "$username" -- env \
+    -u XDG_RUNTIME_DIR -u DBUS_SESSION_BUS_ADDRESS -u XDG_SESSION_ID -u XDG_SESSION_TYPE -u XDG_SESSION_CLASS \
     HOME="$home" \
     USER="$username" \
     LOGNAME="$username" \
