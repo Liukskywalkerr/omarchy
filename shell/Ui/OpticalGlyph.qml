@@ -46,7 +46,10 @@ Item {
     font.pixelSize: root.renderedFontSize
     transformOrigin: Item.TopLeft
     scale: root.paintedScale
-    renderType: root.paintedSize > 0 ? Text.CurveRendering : Text.NativeRendering
+    // Scaled icons use distance fields: at bar sizes the curve renderer's
+    // antialiasing overshoots where a corner meets a straight edge, so the
+    // flat top of a rounded square steps up at its ends.
+    renderType: root.paintedSize > 0 ? Text.QtRendering : Text.NativeRendering
   }
 
   Rectangle {
