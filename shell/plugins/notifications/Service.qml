@@ -25,6 +25,12 @@ Item {
 
   // Injected by omarchy-shell (the first-party service loader).
   property var shell: null
+  // A new login keeps the deck out of sight until its desktop has faded in
+  // (shell/services/BackgroundIntro.qml), so the first thing on screen is the
+  // whole desktop, not toasts over a blank one. Their timers and the keyboard
+  // wait as well. Hidden until the shell is injected, so the deck only ever
+  // fades in, never out.
+  readonly property bool desktopRevealed: !!shell && !(shell.bootIntro && shell.bootIntro.startupPending)
 
   // ------------------------------------------------------------- displays
   //
@@ -301,6 +307,7 @@ Item {
   }
 
   function startKeyboard(key) {
+    if (!desktopRevealed) return false
     var order = keyboardOrder()
     if (!order.length) return false
     keyboardMode = true
@@ -1500,7 +1507,7 @@ Item {
 
       WlrLayershell.namespace: "omarchy-notifications"
       WlrLayershell.layer: WlrLayer.Overlay
-      readonly property bool takesKeyboard: service.keyboardMode && service.targetDisplayName === String(modelData.name)
+      readonly property bool takesKeyboard: service.desktopRevealed && service.keyboardMode && service.targetDisplayName === String(modelData.name)
       WlrLayershell.keyboardFocus: takesKeyboard ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
       exclusionMode: ExclusionMode.Ignore
 
@@ -1508,7 +1515,7 @@ Item {
       anchors { top: true; bottom: true; right: true }
       implicitWidth: clipper.width + Style.space(10)
 
-      mask: Region { item: surface.showingNotifications ? deck : null }
+      mask: Region { item: surface.showingNotifications && service.desktopRevealed ? deck : null }
 
       Item {
         focus: surface.takesKeyboard
@@ -1520,6 +1527,10 @@ Item {
       Item {
         id: clipper
         visible: surface.showingNotifications
+        // Laid out while hidden, so cards that arrived during login have
+        // their heights; they fade in after the desktop instead of popping.
+        opacity: service.desktopRevealed ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Style.duration(250); easing.type: Easing.OutCubic } }
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.topMargin: surface.margins.top
@@ -1630,7 +1641,7 @@ Item {
                         && service.openDeck === Layout.groupKeyFor(model)
               // Hover opens the body only when there is nothing else to open.
               sole: toasts.count === 1
-              paused: service.expanded
+              paused: service.expanded || !service.desktopRevealed
 
               drawnHeight: service.at(model.key, "height")
               // A hidden output collapses child visibility; its measurements
